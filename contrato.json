@@ -1,116 +1,304 @@
 {
   "versao": 1,
-  "tema": "Biblioteca",
-  "descricao": "Usuários cadastram livros. Qualquer pessoa vê os livros; só quem cadastrou altera ou remove.",
+  "tema": "Controle Financeiro Pessoal",
+  "descricao": "Usuários cadastram receitas, despesas e metas financeiras. Cada usuário pode visualizar, alterar e remover apenas seus próprios registros.",
   "rotas": [
     {
-      "metodo": "GET",
-      "caminho": "/livros",
+      "metodo": "POST",
+      "caminho": "/auth/cadastro",
       "acesso": "aberto",
-      "descricao": "Lista todos os livros.",
+      "descricao": "Cadastra um novo usuário.",
       "exemplos": [
         {
-          "descricao": "Lista os livros",
-          "requisicao": null,
-          "resposta": [
-            { "id": 1, "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938, "usuarioId": 3 }
-          ],
+          "descricao": "Dados válidos",
+          "requisicao": {
+            "nome": "Gabriel",
+            "email": "gabriel@email.com",
+            "senha": "senha123"
+          },
+          "resposta": {
+            "id": 1,
+            "nome": "Gabriel",
+            "email": "gabriel@email.com"
+          },
+          "status": 201
+        },
+        {
+          "descricao": "E-mail já utilizado",
+          "requisicao": {
+            "nome": "Gabriel",
+            "email": "gabriel@email.com",
+            "senha": "senha123"
+          },
+          "resposta": {
+            "erro": "E-mail já utilizado"
+          },
+          "status": 400
+        }
+      ]
+    },
+    {
+      "metodo": "POST",
+      "caminho": "/auth/login",
+      "acesso": "aberto",
+      "descricao": "Realiza o login do usuário.",
+      "exemplos": [
+        {
+          "descricao": "Login válido",
+          "requisicao": {
+            "email": "gabriel@email.com",
+            "senha": "senha123"
+          },
+          "resposta": {
+            "token": "token_de_exemplo"
+          },
           "status": 200
+        },
+        {
+          "descricao": "E-mail ou senha incorretos",
+          "requisicao": {
+            "email": "gabriel@email.com",
+            "senha": "senhaerrada"
+          },
+          "resposta": {
+            "erro": "E-mail ou senha incorretos"
+          },
+          "status": 401
         }
       ]
     },
     {
       "metodo": "GET",
-      "caminho": "/livros/:id",
-      "acesso": "aberto",
-      "descricao": "Detalha um livro.",
+      "caminho": "/auth/perfil",
+      "acesso": "logado",
+      "descricao": "Consulta os dados do usuário autenticado.",
       "exemplos": [
         {
-          "descricao": "Livro existe",
+          "descricao": "Perfil encontrado",
           "requisicao": null,
-          "resposta": { "id": 1, "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938, "usuarioId": 3 },
+          "resposta": {
+            "id": 1,
+            "nome": "Gabriel",
+            "email": "gabriel@email.com"
+          },
           "status": 200
         },
         {
-          "descricao": "Livro não existe",
+          "descricao": "Sem token",
           "requisicao": null,
-          "resposta": { "erro": "Livro não encontrado" },
+          "resposta": {
+            "erro": "Token ausente ou inválido"
+          },
+          "status": 401
+        }
+      ]
+    },
+    {
+      "metodo": "GET",
+      "caminho": "/transacoes",
+      "acesso": "logado",
+      "descricao": "Lista as transações financeiras do usuário autenticado.",
+      "exemplos": [
+        {
+          "descricao": "Lista as transações",
+          "requisicao": null,
+          "resposta": [
+            {
+              "id": 1,
+              "descricao": "Salário",
+              "valor": 1800.00,
+              "tipo": "receita",
+              "data": "2026-10-01",
+              "usuarioId": 1
+            },
+            {
+              "id": 2,
+              "descricao": "Supermercado",
+              "valor": 150.00,
+              "tipo": "despesa",
+              "data": "2026-10-05",
+              "usuarioId": 1
+            }
+          ],
+          "status": 200
+        },
+        {
+          "descricao": "Sem token",
+          "requisicao": null,
+          "resposta": {
+            "erro": "Token ausente ou inválido"
+          },
+          "status": 401
+        }
+      ]
+    },
+    {
+      "metodo": "GET",
+      "caminho": "/transacoes/:id",
+      "acesso": "dono",
+      "descricao": "Detalha uma transação financeira do usuário autenticado.",
+      "exemplos": [
+        {
+          "descricao": "Transação encontrada",
+          "requisicao": null,
+          "resposta": {
+            "id": 1,
+            "descricao": "Salário",
+            "valor": 1800.00,
+            "tipo": "receita",
+            "data": "2026-10-01",
+            "usuarioId": 1
+          },
+          "status": 200
+        },
+        {
+          "descricao": "Transação não encontrada",
+          "requisicao": null,
+          "resposta": {
+            "erro": "Transação não encontrada"
+          },
           "status": 404
         }
       ]
     },
     {
       "metodo": "POST",
-      "caminho": "/livros",
+      "caminho": "/transacoes",
       "acesso": "logado",
-      "descricao": "Cadastra um livro. O dono é quem está logado.",
+      "descricao": "Cadastra uma transação financeira. O dono é definido pelo token.",
       "exemplos": [
         {
           "descricao": "Dados válidos",
-          "requisicao": { "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938 },
-          "resposta": { "id": 1, "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938, "usuarioId": 3 },
+          "requisicao": {
+            "descricao": "Compra no supermercado",
+            "valor": 150.00,
+            "tipo": "despesa",
+            "data": "2026-10-05"
+          },
+          "resposta": {
+            "id": 2,
+            "descricao": "Compra no supermercado",
+            "valor": 150.00,
+            "tipo": "despesa",
+            "data": "2026-10-05",
+            "usuarioId": 1
+          },
           "status": 201
         },
         {
-          "descricao": "Falta o autor",
-          "requisicao": { "titulo": "Vidas Secas" },
-          "resposta": { "erro": "Campo obrigatório ausente: autor" },
+          "descricao": "Valor inválido",
+          "requisicao": {
+            "descricao": "Compra no supermercado",
+            "valor": -150,
+            "tipo": "despesa",
+            "data": "2026-10-05"
+          },
+          "resposta": {
+            "erro": "O valor deve ser maior que zero"
+          },
           "status": 400
         },
         {
           "descricao": "Sem token",
-          "requisicao": { "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938 },
-          "resposta": { "erro": "Token ausente ou inválido" },
+          "requisicao": {
+            "descricao": "Compra no supermercado",
+            "valor": 150,
+            "tipo": "despesa",
+            "data": "2026-10-05"
+          },
+          "resposta": {
+            "erro": "Token ausente ou inválido"
+          },
           "status": 401
         }
       ]
     },
     {
       "metodo": "PUT",
-      "caminho": "/livros/:id",
+      "caminho": "/transacoes/:id",
       "acesso": "dono",
-      "descricao": "Altera um livro. Só o dono pode.",
+      "descricao": "Altera uma transação financeira. Somente o dono pode.",
       "exemplos": [
         {
-          "descricao": "Dono altera o livro",
-          "requisicao": { "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938 },
-          "resposta": { "id": 1, "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938, "usuarioId": 3 },
+          "descricao": "Transação alterada",
+          "requisicao": {
+            "descricao": "Compra de alimentos",
+            "valor": 120.00,
+            "tipo": "despesa",
+            "data": "2026-10-05"
+          },
+          "resposta": {
+            "id": 2,
+            "descricao": "Compra de alimentos",
+            "valor": 120.00,
+            "tipo": "despesa",
+            "data": "2026-10-05",
+            "usuarioId": 1
+          },
           "status": 200
         },
         {
-          "descricao": "Ano no futuro",
-          "requisicao": { "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 2999 },
-          "resposta": { "erro": "Ano não pode ser no futuro" },
+          "descricao": "Valor inválido",
+          "requisicao": {
+            "descricao": "Compra de alimentos",
+            "valor": -120,
+            "tipo": "despesa",
+            "data": "2026-10-05"
+          },
+          "resposta": {
+            "erro": "O valor deve ser maior que zero"
+          },
           "status": 400
         },
         {
           "descricao": "Sem token",
-          "requisicao": { "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938 },
-          "resposta": { "erro": "Token ausente ou inválido" },
+          "requisicao": {
+            "descricao": "Compra de alimentos",
+            "valor": 120,
+            "tipo": "despesa",
+            "data": "2026-10-05"
+          },
+          "resposta": {
+            "erro": "Token ausente ou inválido"
+          },
           "status": 401
         },
         {
-          "descricao": "Logado, mas não é o dono",
-          "requisicao": { "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938 },
-          "resposta": { "erro": "Sem permissão para alterar este livro" },
+          "descricao": "Não é o dono",
+          "requisicao": {
+            "descricao": "Compra de alimentos",
+            "valor": 120,
+            "tipo": "despesa",
+            "data": "2026-10-05"
+          },
+          "resposta": {
+            "erro": "Sem permissão para alterar esta transação"
+          },
           "status": 403
         },
         {
-          "descricao": "Livro não existe",
-          "requisicao": { "titulo": "Vidas Secas", "autor": "Graciliano Ramos", "ano": 1938 },
-          "resposta": { "erro": "Livro não encontrado" },
+          "descricao": "Transação inexistente",
+          "requisicao": {
+            "descricao": "Compra de alimentos",
+            "valor": 120,
+            "tipo": "despesa",
+            "data": "2026-10-05"
+          },
+          "resposta": {
+            "erro": "Transação não encontrada"
+          },
           "status": 404
         }
       ]
     },
     {
       "metodo": "DELETE",
-      "caminho": "/livros/:id",
+      "caminho": "/transacoes/:id",
       "acesso": "dono",
-      "descricao": "Remove um livro. Só o dono pode.",
+      "descricao": "Remove uma transação financeira. Somente o dono pode.",
       "exemplos": [
         {
-          "descricao": "Dono remove o livro",
+          "descricao": "Transação removida",
           "requisicao": null,
           "resposta": null,
           "status": 204
@@ -118,19 +306,250 @@
         {
           "descricao": "Sem token",
           "requisicao": null,
-          "resposta": { "erro": "Token ausente ou inválido" },
+          "resposta": {
+            "erro": "Token ausente ou inválido"
+          },
           "status": 401
         },
         {
-          "descricao": "Logado, mas não é o dono",
+          "descricao": "Não é o dono",
           "requisicao": null,
-          "resposta": { "erro": "Sem permissão para remover este livro" },
+          "resposta": {
+            "erro": "Sem permissão para remover esta transação"
+          },
           "status": 403
         },
         {
-          "descricao": "Livro não existe",
+          "descricao": "Transação inexistente",
           "requisicao": null,
-          "resposta": { "erro": "Livro não encontrado" },
+          "resposta": {
+            "erro": "Transação não encontrada"
+          },
+          "status": 404
+        }
+      ]
+    },
+    {
+      "metodo": "GET",
+      "caminho": "/metas",
+      "acesso": "logado",
+      "descricao": "Lista as metas financeiras do usuário autenticado.",
+      "exemplos": [
+        {
+          "descricao": "Lista as metas",
+          "requisicao": null,
+          "resposta": [
+            {
+              "id": 1,
+              "nome": "Comprar um notebook",
+              "valorObjetivo": 2000.00,
+              "valorGuardado": 500.00,
+              "dataLimite": "2027-06-30",
+              "usuarioId": 1
+            }
+          ],
+          "status": 200
+        },
+        {
+          "descricao": "Sem token",
+          "requisicao": null,
+          "resposta": {
+            "erro": "Token ausente ou inválido"
+          },
+          "status": 401
+        }
+      ]
+    },
+    {
+      "metodo": "GET",
+      "caminho": "/metas/:id",
+      "acesso": "dono",
+      "descricao": "Detalha uma meta financeira do usuário autenticado.",
+      "exemplos": [
+        {
+          "descricao": "Meta encontrada",
+          "requisicao": null,
+          "resposta": {
+            "id": 1,
+            "nome": "Comprar um notebook",
+            "valorObjetivo": 2000.00,
+            "valorGuardado": 500.00,
+            "dataLimite": "2027-06-30",
+            "usuarioId": 1
+          },
+          "status": 200
+        },
+        {
+          "descricao": "Meta inexistente",
+          "requisicao": null,
+          "resposta": {
+            "erro": "Meta não encontrada"
+          },
+          "status": 404
+        }
+      ]
+    },
+    {
+      "metodo": "POST",
+      "caminho": "/metas",
+      "acesso": "logado",
+      "descricao": "Cadastra uma meta financeira. O dono é definido pelo token.",
+      "exemplos": [
+        {
+          "descricao": "Dados válidos",
+          "requisicao": {
+            "nome": "Comprar um notebook",
+            "valorObjetivo": 2000.00,
+            "dataLimite": "2027-06-30"
+          },
+          "resposta": {
+            "id": 1,
+            "nome": "Comprar um notebook",
+            "valorObjetivo": 2000.00,
+            "valorGuardado": 0.00,
+            "dataLimite": "2027-06-30",
+            "usuarioId": 1
+          },
+          "status": 201
+        },
+        {
+          "descricao": "Valor objetivo inválido",
+          "requisicao": {
+            "nome": "Comprar um notebook",
+            "valorObjetivo": -2000,
+            "dataLimite": "2027-06-30"
+          },
+          "resposta": {
+            "erro": "O valor objetivo deve ser maior que zero"
+          },
+          "status": 400
+        },
+        {
+          "descricao": "Sem token",
+          "requisicao": {
+            "nome": "Comprar um notebook",
+            "valorObjetivo": 2000,
+            "dataLimite": "2027-06-30"
+          },
+          "resposta": {
+            "erro": "Token ausente ou inválido"
+          },
+          "status": 401
+        }
+      ]
+    },
+    {
+      "metodo": "PUT",
+      "caminho": "/metas/:id",
+      "acesso": "dono",
+      "descricao": "Altera uma meta financeira. Somente o dono pode.",
+      "exemplos": [
+        {
+          "descricao": "Meta alterada",
+          "requisicao": {
+            "nome": "Comprar um notebook",
+            "valorObjetivo": 2500.00,
+            "valorGuardado": 800.00,
+            "dataLimite": "2027-08-30"
+          },
+          "resposta": {
+            "id": 1,
+            "nome": "Comprar um notebook",
+            "valorObjetivo": 2500.00,
+            "valorGuardado": 800.00,
+            "dataLimite": "2027-08-30",
+            "usuarioId": 1
+          },
+          "status": 200
+        },
+        {
+          "descricao": "Valor inválido",
+          "requisicao": {
+            "nome": "Comprar um notebook",
+            "valorObjetivo": -2500,
+            "valorGuardado": 800,
+            "dataLimite": "2027-08-30"
+          },
+          "resposta": {
+            "erro": "O valor objetivo deve ser maior que zero"
+          },
+          "status": 400
+        },
+        {
+          "descricao": "Sem token",
+          "requisicao": {
+            "nome": "Comprar um notebook",
+            "valorObjetivo": 2500,
+            "valorGuardado": 800,
+            "dataLimite": "2027-08-30"
+          },
+          "resposta": {
+            "erro": "Token ausente ou inválido"
+          },
+          "status": 401
+        },
+        {
+          "descricao": "Não é o dono",
+          "requisicao": {
+            "nome": "Comprar um notebook",
+            "valorObjetivo": 2500,
+            "valorGuardado": 800,
+            "dataLimite": "2027-08-30"
+          },
+          "resposta": {
+            "erro": "Sem permissão para alterar esta meta"
+          },
+          "status": 403
+        },
+        {
+          "descricao": "Meta inexistente",
+          "requisicao": {
+            "nome": "Comprar um notebook",
+            "valorObjetivo": 2500,
+            "valorGuardado": 800,
+            "dataLimite": "2027-08-30"
+          },
+          "resposta": {
+            "erro": "Meta não encontrada"
+          },
+          "status": 404
+        }
+      ]
+    },
+    {
+      "metodo": "DELETE",
+      "caminho": "/metas/:id",
+      "acesso": "dono",
+      "descricao": "Remove uma meta financeira. Somente o dono pode.",
+      "exemplos": [
+        {
+          "descricao": "Meta removida",
+          "requisicao": null,
+          "resposta": null,
+          "status": 204
+        },
+        {
+          "descricao": "Sem token",
+          "requisicao": null,
+          "resposta": {
+            "erro": "Token ausente ou inválido"
+          },
+          "status": 401
+        },
+        {
+          "descricao": "Não é o dono",
+          "requisicao": null,
+          "resposta": {
+            "erro": "Sem permissão para remover esta meta"
+          },
+          "status": 403
+        },
+        {
+          "descricao": "Meta inexistente",
+          "requisicao": null,
+          "resposta": {
+            "erro": "Meta não encontrada"
+          },
           "status": 404
         }
       ]
